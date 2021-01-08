@@ -1,4 +1,6 @@
 import discord
+import random
+import wikipedia
 from discord.ext import commands
 
 client = commands.Bot(command_prefix="!")
@@ -17,14 +19,14 @@ async def on_ready():
 
 @client.command()
 async def hello(ctx):
-    await ctx.send("Hello!")
+    await ctx.send(f"Hello!")
 
 ##Custom Help Command:
 @client.group(invoke_without_command = True)
 async def help(ctx):
     em = discord.Embed(title = "SOME1 Help Commands")
-    em.add_field(name = "⚒️ Moderation", value = "!help moderation")
-    em.add_field(name = "Fun", value = "help fun")
+    em.add_field(name = "⚒️ Moderation", value = "`!help moderation`")
+    em.add_field(name = "😂 Fun", value = "`!help fun`")
     await ctx.send(embed = em)
 
 @help.command()
@@ -38,8 +40,22 @@ async def moderation(ctx):
     em.add_field(name = "!unban [member]", value = "`Unbans a member from a the server.`\n*Required Permission: Ban Members*", inline = False)
     em.add_field(name = "!addrole [member] [role]", value = "`Adds a role to a member.`\n*Required Permission: Manage Roles*", inline = False)
     em.add_field(name = "!delrole [member] [role]", value = "`Removes a role from a member.`\n*Required Permission: Manage Roles*", inline = False)
+
     await ctx.send(embed = em)
 
+@help.command()
+async def fun(ctx):
+    em = discord.Embed(title = "😂 Fun Commands")
+    em.add_field(name = "!coinflip", value = "Flips a coin.", inline = False)
+    em.add_field(name = "!wikipedia [topic]", value = "Searches for a specific topic on wikipedia.", inline = False)
+    em.add_field(name = "!randomnumber (optional number 1) (optional number 2)", value = "Generates a random number between the specified 2 numbers. (if not specified it will just generate a random number)")
+    await ctx.send(embed = em)
+
+@help.command()
+async def social(ctx):
+    em = discord.Embed(title = "💬 Social Commands")
+    em.add_field(name = "!hug [member]", value = "Hug a member.", inline = False)
+    em.add_field(name = "!kiss [member]", value = "Kiss a member.", inline = False)
 
 ##Moderation Commands:
 @client.command(aliases=["c"]) ##The Clear Command
@@ -119,6 +135,48 @@ async def delrole(ctx, user: discord.Member, role: discord.Role):
     await user.add_roles(role)
     await ctx.send(f"Successfully remove {role.mention} from {user.mention}")
 
+#Fun Commands:
+@client.command()
+async def coinflip(ctx):
+    choices = ["Bead", "Tail"]
+    await ctx.send(":coin: The coin fliped: **" + random.choice(choices) +"**")
 
+@client.command()
+async def randomnumber(ctx, n1 = 0, n2 = 1000000000):
+    await ctx.send("Your random number is " + str(random.randint(n1, n2)))
 
-client.run("NzcxODI1MzI5NzQwMTg1NjQw.X5xwWg.aP70xncfhKDpPapoSAmqy_mr5M4")
+@client.command() #Command that users can use to search articles on wikipedia
+async def wiki(ctx, *,topic = "wikipedia"):
+    try:
+        page = wikipedia.page(wikipedia.suggest(topic))
+        if(len(page.summary)>2000): #if the summary of the page is bigger than 2000 characters, the summary will be resized to 2000 characters.
+            em = discord.Embed(title = ":globe_with_meridians: " + str(topic) + " | Summary", description = str(str('%.2000s') % str(page.summary)))
+            em.set_footer(text=page.url)
+        else:
+            em = discord.Embed(title = str(topic), description = page.summary)
+            em.set_footer(text="Source: " + page.url)
+        await ctx.send(embed = em)
+    except: #if the wikipedia API return a error(didn't find a article or there are too many articles) the author will be announced
+        await ctx.send(":globe_with_meridians: There are too many/none topics with this keyword on wikipedia. Please be more specific.")
+
+#Social Commands:
+@client.command()
+async def hug(ctx, member: discord.Member):
+    ##Links of gifs that the bot will send
+    gifs = ["https://gifimage.net/wp-content/uploads/2017/09/anime-comfort-hug-gif-14.gif",
+    "https://78.media.tumblr.com/18fdf4adcb5ad89f5469a91e860f80ba/tumblr_oltayyHynP1sy5k7wo1_500.gif",
+    "https://media.tenor.co/images/42922e87b3ec288b11f59ba7f3cc6393/raw",
+    "https://i.imgur.com/iI3o7t0.gif",
+    "https://pa1.narvii.com/5722/d741ae3145e17efa00e262e3a2ead6f16e3f1289_hq.gif",
+    "https://thumbs.gfycat.com/AchingKlutzyJohndory-max-1mb.gif",
+    "https://thumbs.gfycat.com/SilkyAmbitiousHarvestmen-max-1mb.gif"
+    ]
+    em = discord.Embed(title = f"{member} you received a hug :hugging:")
+    em.set_image(url=str(random.choice(gifs)))
+    await ctx.send(embed = em)
+
+@client.command()
+async def kiss(ctx, member : discord.Member):
+    await ctx.send(f"{member.mention} someone gave you a kiss :kissing_heart:")
+
+client.run("TOKEN")
