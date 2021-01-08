@@ -74,6 +74,7 @@ async def giveaways(ctx):
     em = discord.Embed(title = "🎉 Giveaways Commands")
     em.add_field(name = "!giveaway", value = "`Creates a new giveaway.`")
     em.add_field(name = "!reroll [channel] [id of the giveaway]", value = "`Rerolls the winners of the giveaway.`")
+    await ctx.send(embed = em)
 
 ##Moderation Commands:
 @client.command(aliases=["c"]) ##The Clear Command
