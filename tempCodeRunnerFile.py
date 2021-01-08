@@ -1,1 +1,0 @@
-2000s' % page.summary))
