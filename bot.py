@@ -121,4 +121,4 @@ async def delrole(ctx, user: discord.Member, role: discord.Role):
 
 
 
-client.run("NzcxODI1MzI5NzQwMTg1NjQw.X5xwWg.aP70xncfhKDpPapoSAmqy_mr5M4")
+client.run("TOKEN")
