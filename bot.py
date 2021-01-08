@@ -199,4 +199,4 @@ async def poll(ctx,*,message):
     except:
         await ctx.send("Invalid Syntax! Please use the correct version: **`!poll [message]`**")
 
-client.run("NzcxODI1MzI5NzQwMTg1NjQw.X5xwWg.8CiVCJrz6ZmsixYtQ_G4Atb-CA0")
+client.run("TOKEN")
