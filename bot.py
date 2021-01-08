@@ -3,16 +3,42 @@ from discord.ext import commands
 
 client = commands.Bot(command_prefix="!")
 
+#remove the default help command
+client.remove_command("help")
+
 ##Status:
 @client.event
 async def on_ready():
-    print("The Bot is online!")
+    print("Logged in as")
+    print(client.user.name)
+    print(client.user.id)
+    print("----------")
     await client.change_presence(activity=discord.Game(name="!help | some1.xyz"))
 
 @client.command()
 async def hello(ctx):
     await ctx.send("Hello!")
 
+##Custom Help Command:
+@client.group(invoke_without_command = True)
+async def help(ctx):
+    em = discord.Embed(title = "SOME1 Help Commands")
+    em.add_field(name = "⚒️ Moderation", value = "!help moderation")
+    em.add_field(name = "Fun", value = "help fun")
+    await ctx.send(embed = em)
+
+@help.command()
+async def moderation(ctx):
+    em = discord.Embed(title = "⚒️ Moderation Commands")
+    em.add_field(name = "!clear (optional amount)", value = "`Clears messages in a particular channel.`\n*Required Permission: Manage Messages*")
+    em.add_field(name = "!mute [member] (optional reason)", value = "`Mutes a specific member.`\n*Required Permission: Manage Messages*", inline = False)
+    em.add_field(name = "!unmute [member]", value = "`Unmutes a member.`\n*Required Permission: Manage Messages*", inline = False)
+    em.add_field(name = "!kick [member] (optional reason)", value = "`Kicks a member from the server.`\n*Required Permission: Kick Members*", inline = False)
+    em.add_field(name = "!ban [member] (optional reason)", value = "`Bans a member from the server.`\n*Required Permission: Ban Members*", inline = False)
+    em.add_field(name = "!unban [member]", value = "`Unbans a member from a the server.`\n*Required Permission: Ban Members*", inline = False)
+    em.add_field(name = "!addrole [member] [role]", value = "`Adds a role to a member.`\n*Required Permission: Manage Roles*", inline = False)
+    em.add_field(name = "!delrole [member] [role]", value = "`Removes a role from a member.`\n*Required Permission: Manage Roles*", inline = False)
+    await ctx.send(embed = em)
 
 
 ##Moderation Commands:
@@ -74,11 +100,25 @@ async def mute(ctx, member: discord.Member, *, reason="None"):
     await member.add_roles(mutedRole)
     await ctx.send(f"{member} has been muted. *Reason: {reason}*")
 
-@client.command(aliases = ["um"])
+@client.command(aliases = ["um"]) #The unmute command
 @commands.has_permissions(manage_messages = True)
 async def unmute(ctx, member : discord.Member, *,reason="None"):
     mutedRole = discord.utils.get(ctx.guild.roles, name="Muted")
     await member.remove_roles(mutedRole)
     await ctx.send (f"{member} has been unmuted.")
 
-client.run("")
+@client.command()
+@commands.has_permissions(manage_roles = True)
+async def addrole(ctx, user: discord.Member, role: discord.Role):
+    await user.add_roles(role)
+    await ctx.send(f"Successfully given {role.mention} to {user.mention}")
+
+@client.command()
+@commands.has_permissions(manage_roles = True)
+async def delrole(ctx, user: discord.Member, role: discord.Role):
+    await user.add_roles(role)
+    await ctx.send(f"Successfully remove {role.mention} from {user.mention}")
+
+
+
+client.run("NzcxODI1MzI5NzQwMTg1NjQw.X5xwWg.aP70xncfhKDpPapoSAmqy_mr5M4")
