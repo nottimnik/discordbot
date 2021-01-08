@@ -27,6 +27,8 @@ async def help(ctx):
     em = discord.Embed(title = "SOME1 Help Commands")
     em.add_field(name = "⚒️ Moderation", value = "`!help moderation`")
     em.add_field(name = "😂 Fun", value = "`!help fun`")
+    em.add_field(name = "💬 Social", value = "`!help social`")
+    em.add_field(name = "📣 Polls", value = "`!help polls`", inline = False)
     await ctx.send(embed = em)
 
 @help.command()
@@ -46,16 +48,23 @@ async def moderation(ctx):
 @help.command()
 async def fun(ctx):
     em = discord.Embed(title = "😂 Fun Commands")
-    em.add_field(name = "!coinflip", value = "Flips a coin.", inline = False)
-    em.add_field(name = "!wikipedia [topic]", value = "Searches for a specific topic on wikipedia.", inline = False)
-    em.add_field(name = "!randomnumber (optional number 1) (optional number 2)", value = "Generates a random number between the specified 2 numbers. (if not specified it will just generate a random number)")
+    em.add_field(name = "!coinflip", value = "`Flips a coin.`", inline = False)
+    em.add_field(name = "!wikipedia [topic]", value = "`Searches for a specific topic on wikipedia.`", inline = False)
+    em.add_field(name = "!randomnumber (optional number 1) (optional number 2)", value = "`Generates a random number between the specified 2 numbers.`\n*if not specified it will just generate a random number*")
     await ctx.send(embed = em)
 
 @help.command()
 async def social(ctx):
     em = discord.Embed(title = "💬 Social Commands")
-    em.add_field(name = "!hug [member]", value = "Hug a member.", inline = False)
-    em.add_field(name = "!kiss [member]", value = "Kiss a member.", inline = False)
+    em.add_field(name = "!hug [member]", value = "`Hug a member.`", inline = False)
+    em.add_field(name = "!kiss [member]", value = "`Kiss a member.`", inline = False)
+    await ctx.send(embed = em)
+
+@help.command()
+async def polls(ctx):
+    em = discord.Embed(title = "Poll Commands")
+    em.add_field(name = "!poll [message]", value = "`Creates a poll with the introduced message.`")
+    await ctx.send(embed = em)
 
 ##Moderation Commands:
 @client.command(aliases=["c"]) ##The Clear Command
@@ -179,4 +188,15 @@ async def hug(ctx, member: discord.Member):
 async def kiss(ctx, member : discord.Member):
     await ctx.send(f"{member.mention} someone gave you a kiss :kissing_heart:")
 
-client.run("TOKEN")
+#Poll Commands:
+@client.command()
+async def poll(ctx,*,message):
+    try:
+        em = discord.Embed(title = ":mega:  POLL", description =f"{message}")
+        msg = await ctx.send(embed=em)
+        await msg.add_reaction("👍")
+        await msg.add_reaction("👎")
+    except:
+        await ctx.send("Invalid Syntax! Please use the correct version: **`!poll [message]`**")
+
+client.run("NzcxODI1MzI5NzQwMTg1NjQw.X5xwWg.8CiVCJrz6ZmsixYtQ_G4Atb-CA0")
