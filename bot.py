@@ -77,12 +77,17 @@ async def giveaways(ctx):
     await ctx.send(embed = em)
 
 ##Moderation Commands:
-@client.command(aliases=["c"]) ##The Clear Command
+@client.command() ##The Clear Command
 @commands.has_permissions(manage_messages = True)
 async def clear(ctx,amount=1):
     amount = amount + 1
     await ctx.channel.purge(limit = amount)
     await ctx.send(f"Successfully deleted {amount-1} messages!")
+
+@clear.error
+async def clear_error(ctx, error):
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send('You do not have permssion to use that command :/')
 
 @client.command(aliases=["k"]) ##The Kick Command
 @commands.has_permissions(kick_members = True)
@@ -91,12 +96,26 @@ async def kick(ctx, member : discord.Member, *,reason = "None"):
     await ctx.send(f"{member} has been kicked from the server! *Reason: {reason}*")
     await member.kick(reason=reason)
 
+@kick.error
+async def kick_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send('Please specify the member you want to kick. Usage: `!kick [member] (optional reason)`')
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send('You do not have permssion to use that command :/')
+
 @client.command(aliases=["b"]) ##The Ban Command
 @commands.has_permissions(ban_members = True)
 async def ban(ctx, member : discord.Member, *,reason = "None"):
     await member.send(f"You have been banned. *Reason: {reason}*")
     await ctx.send(f"{member} has been banned from the server! *Reason: {reason}*")
     await member.ban(reason=reason)
+
+@ban.error
+async def ban_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send('Please specify the member you want to ban. Usage: `!ban [member] (optional reason)`')
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send('You do not have permssion to use that command :/')
 
 @client.command(aliases=["ub"]) ##The unban command
 @commands.has_permissions(ban_members = True)
@@ -115,7 +134,14 @@ async def unban(ctx,*,member):
         
     ctx.send(member + " was not found.")
 
-@client.command(aliases=["m"]) #The mute command
+@unban.error
+async def unban_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send('Please specify the member you want to unban. Usage: `!unban [member]`')
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send('You do not have permssion to use that command :/')
+
+@client.command #The mute command
 @commands.has_permissions(manage_messages = True)
 async def mute(ctx, member: discord.Member, *, reason="None"):
     guild = ctx.guild
@@ -135,6 +161,13 @@ async def mute(ctx, member: discord.Member, *, reason="None"):
     await member.add_roles(mutedRole)
     await ctx.send(f"{member} has been muted. *Reason: {reason}*")
 
+@mute.error
+async def mute_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send('Please specify the member you want to mute. Usage: `!mute [member] (optional reason)`')
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send('You do not have permssion to use that command :/')
+
 @client.command(aliases = ["um"]) #The unmute command
 @commands.has_permissions(manage_messages = True)
 async def unmute(ctx, member : discord.Member, *,reason="None"):
@@ -142,17 +175,39 @@ async def unmute(ctx, member : discord.Member, *,reason="None"):
     await member.remove_roles(mutedRole)
     await ctx.send (f"{member} has been unmuted.")
 
+@unmute.error
+async def unmute_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send('Please specify the player you want to unmute. Usage: `!unmute [member]`')
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send('You do not have permssion to use that command :/')
+
 @client.command()
 @commands.has_permissions(manage_roles = True)
 async def addrole(ctx, user: discord.Member, role: discord.Role):
     await user.add_roles(role)
     await ctx.send(f"Successfully given {role.mention} to {user.mention}")
 
+@addrole.error
+async def addrole_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send('Please specify the player and the role you want to add to. Usage: `!addrole [member] [role]`')
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send('You do not have permssion to use that command :/')
+
 @client.command()
 @commands.has_permissions(manage_roles = True)
 async def delrole(ctx, user: discord.Member, role: discord.Role):
     await user.add_roles(role)
     await ctx.send(f"Successfully remove {role.mention} from {user.mention}")
+
+@delrole.error
+async def delrole_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send('Please specify the player and the role you want to remove from. Usage: `!delrole [member] [role]`')
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send('You do not have permssion to use that command :/')
+
 
 #Fun Commands:
 @client.command()
@@ -178,6 +233,11 @@ async def wiki(ctx, *,topic = "wikipedia"):
     except: #if the wikipedia API return a error(didn't find a article or there are too many articles) the author will be announced
         await ctx.send(":globe_with_meridians: There are too many/none topics with this keyword on wikipedia. Please be more specific.")
 
+@wiki.error
+async def wiki_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send('Please specify the topic you want to search for. Usage: `!wiki [topic]`')
+
 #Social Commands:
 @client.command()
 async def hug(ctx, member: discord.Member):
@@ -194,12 +254,23 @@ async def hug(ctx, member: discord.Member):
     em.set_image(url=str(random.choice(gifs)))
     await ctx.send(embed = em)
 
+@hug.error
+async def hug_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send('Please specify the member you want to hug. Usage: `!hug [member]`')
+
 @client.command()
 async def kiss(ctx, member : discord.Member):
     await ctx.send(f"{member.mention} someone gave you a kiss :kissing_heart:")
 
+@kiss.error
+async def kiss_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send('Please specify the member you want to kiss. Usage: `!kiss [member]`')
+
 #Polls Commands:
 @client.command()
+@commands.has_permissions(administrator = True)
 async def poll(ctx,*,message):
     try:
         em = discord.Embed(title = ":mega:  POLL", description =f"{message}")
@@ -208,6 +279,11 @@ async def poll(ctx,*,message):
         await msg.add_reaction("👎")
     except:
         await ctx.send("Invalid Syntax! Please use the correct version: **`!poll [message]`**")
+
+@poll.error
+async def poll_error(ctx, error):
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send('You do not have permssion to use that command :/')
 
 #Giveaway Commands:
 def convert(time):
@@ -290,6 +366,11 @@ async def giveaway(ctx):
 
     await channel.send(f"Congratulations! {winner.mention} won {prize}!")
 
+@giveaway.error
+async def giveaway_error(ctx, error):
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send('You do not have permssion to use that command :/')
+
 @client.command()
 @commands.has_permissions(administrator = True)
 async def reroll(ctx, channel : discord.TextChannel, id_ : int):
@@ -306,6 +387,9 @@ async def reroll(ctx, channel : discord.TextChannel, id_ : int):
 
     await channel.send(f"Congratulations! The new winner is {winner.mention}!")
 
-
+@reroll.error
+async def reroll_error(ctx, error):
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send('You do not have permssion to use that command :/')
 
 client.run("TOKEN")
