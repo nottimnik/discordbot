@@ -40,6 +40,44 @@ async def on_guild_remove(guild):
         with open(r"database\prefixes.json", "w")as f:
             json.dump(prefixes, f)
 
+#Leveling System:
+@client.event
+async def on_message(message):
+    if not message.author.bot:
+        with open(r'database\level.json','r') as f:
+            users = json.load(f)
+        await update_data(users, message.author,message.guild)
+        await add_experience(users, message.author, 4, message.guild)
+        await level_up(users, message.author,message.channel, message.guild)
+
+        with open(r'database\level.json','w') as f:
+            json.dump(users, f)
+    await client.process_commands(message)
+
+async def update_data(users, user,server):
+    if not str(server.id) in users:
+        users[str(server.id)] = {}
+        if not str(user.id) in users[str(server.id)]:
+            users[str(server.id)][str(user.id)] = {}
+            users[str(server.id)][str(user.id)]['experience'] = 0
+            users[str(server.id)][str(user.id)]['level'] = 1
+    elif not str(user.id) in users[str(server.id)]:
+            users[str(server.id)][str(user.id)] = {}
+            users[str(server.id)][str(user.id)]['experience'] = 0
+            users[str(server.id)][str(user.id)]['level'] = 1
+
+async def add_experience(users, user, exp, server):
+  users[str(user.guild.id)][str(user.id)]['experience'] += exp
+
+async def level_up(users, user, channel, server):
+  experience = users[str(user.guild.id)][str(user.id)]['experience']
+  lvl_start = users[str(user.guild.id)][str(user.id)]['level']
+  lvl_end = int(experience ** (1/4))
+  if str(user.guild.id) != '757383943116030074':
+    if lvl_start < lvl_end:
+      await channel.send('{} has leveled up to Level {}'.format(user.mention, lvl_end))
+      users[str(user.guild.id)][str(user.id)]['level'] = lvl_end
+
 ##Status:
 @client.event
 async def on_ready():
@@ -62,10 +100,13 @@ async def hello(ctx):
 async def help(ctx):
     em = discord.Embed(title = "SOME1 Help Commands")
     em.add_field(name = "⚒️ Moderation", value = "`!help moderation`")
+    em.add_field(name = "⭐ Level System", value = "`!help levelsystem`")
     em.add_field(name = "😂 Fun", value = "`!help fun`")
     em.add_field(name = "💬 Social", value = "`!help social`")
-    em.add_field(name = "📣 Polls", value = "`!help polls`", inline = False)
+    em.add_field(name = "📣 Polls", value = "`!help polls`")
     em.add_field(name = "🎉 Giveaway", value = "`!help giveaways`")
+    em.add_field(name = "👑 Premium", value = "`!help premium`")
+    em.add_field(name = "⚙ Other", value = "`!help other`")
     await ctx.send(embed = em)
 
 @help.command()
@@ -109,6 +150,38 @@ async def giveaways(ctx):
     em.add_field(name = "!giveaway", value = "`Creates a new giveaway.`")
     em.add_field(name = "!reroll [channel] [id of the giveaway]", value = "`Rerolls the winners of the giveaway.`")
     await ctx.send(embed = em)
+
+@help.command()
+async def other(ctx):
+    em = discord.Embed(title = "⚙ Other Commands")
+    em.add_field(name = "!prefix [new prefix]", value = "`Changes the prefix of the bot.`\n*Required Permission: Administrator*")
+    em.add_field(name = "!developers", value = "The Developers behind SOME1.")
+    await ctx.send(embed = em)
+
+@help.command()
+async def levelsystem(ctx):
+    em = discord.Embed(title = "⭐ Level System's Commands")
+    em.add_field(name = "!level or !rank", value = "`See your level and xp.`", inline = False)
+    em.add_field(name = "!level [member] or !rank [member]", value = "`See the mentioned member's xp and level.`")
+
+@help.command()
+async def premium(ctx):
+    em = discord.Embed(title = "👑 Premium", description = "The Premium Version of SOME1's is totally something different.")
+    await ctx.send(embed = em)
+
+#Some other commands:
+@client.command() #Developer Command to see the developers of SOME1
+async def developers(ctx):
+    em = discord.Embed(title = "SOME1's Developers", description = "The team behind SOME1.")
+    em.add_field(name = "Timnik#4158", value = "Main Developer", inline = False)
+    em.add_field(name = "BossuJmek2k19#7072", value = "Made the Audio Bot", inline = False)
+    await ctx.send(embed = em)
+
+@help.error
+async def help_error(ctx, error):
+    if isinstance(error, commands.errors.CommandInvokeError):
+        em = discord.Embed(title = "We couldn't find that :/")
+        await ctx.send(embed = em)
 
 ##Moderation Commands:
 @client.command() ##The Clear Command
@@ -187,7 +260,7 @@ async def mute(ctx, member: discord.Member, *, reason="None"):
 
         ##The Permissions of the mutedRole
         permissions = discord.Permissions()
-        permissions.update(send_messages = False, speak = False) 
+        permissions.update(send_messages = False, speak = True) 
 
         ##Sets The Permissions of the mutedRole
         await mutedRole.edit(permissions = permissions)
@@ -444,5 +517,35 @@ async def prefix_error(ctx, error):
         await ctx.send('You do not have permssion to use that command :/')
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.send("Please specify what the new prefix will be. Usage: `!prefix [new prefix]`")
+
+##Level/Rank Command:
+@client.command(aliases = ['rank','lvl'])
+async def level(ctx,member: discord.Member = None):
+
+    if not member:
+        user = ctx.message.author
+        with open(r'database\level.json','r') as f:
+            users = json.load(f)
+        lvl = users[str(ctx.guild.id)][str(user.id)]['level']
+        exp = users[str(ctx.guild.id)][str(user.id)]['experience']
+
+        embed = discord.Embed(title = 'Level {}'.format(lvl), description = f"{exp} XP " ,color = discord.Color.green())
+        embed.set_author(name = ctx.author, icon_url = ctx.author.avatar_url)
+        await ctx.send(embed = embed)
+    else:
+      with open(r'database\level.json','r') as f:
+          users = json.load(f)
+      lvl = users[str(ctx.guild.id)][str(member.id)]['level']
+      exp = users[str(ctx.guild.id)][str(member.id)]['experience']
+      embed = discord.Embed(title = 'Level {}'.format(lvl), description = f"You have {exp} XP" ,color = discord.Color.green())
+      embed.set_author(name = member, icon_url = member.avatar_url)
+
+      await ctx.send(embed = embed)
+
+@level.error
+async def level_error(ctx, error):
+    if isinstance(error, commands.errors.CommandInvokeError):
+        em = discord.Embed(title="This member doesn't have a profile :(", color = 15158332)
+        await ctx.send(embed = em)
 
 client.run("TOKEN")
