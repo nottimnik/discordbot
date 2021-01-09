@@ -3,12 +3,42 @@ import random
 import wikipedia
 import asyncio
 import datetime
+import json
 from discord.ext import commands
 
-client = commands.Bot(command_prefix="!")
+#Custom Prefix for every server
+def get_prefix(client, message):
+    try:
+        with open(r"database\prefixes.json", "r") as f:
+            prefixes = json.load(f)
+        return prefixes[str(message.guild.id)]
+    except:
+        return "!"
+
+client = commands.Bot(command_prefix= get_prefix)
 
 #remove the default help command
 client.remove_command("help")
+
+@client.event #store the defaul prefix in the database
+async def on_guild_join(guild):
+    with open(r"database\prefixes.json", "r") as f:
+        prefixes = json.load(f)
+
+    prefixes[str(guild.id)] = "!"
+
+    with open(r"database\prefixes.json", "w")as f:
+        json.dump(prefixes, f, indent=4)
+
+@client.event #deletes the prefix from the database if the bot leavea the server
+async def on_guild_remove(guild):
+    with open(r"database\prefixes.json", "r") as f:
+        prefixes = json.load(f)
+
+        prefixes.pop(str(guild.id))
+
+        with open(r"database\prefixes.json", "w")as f:
+            json.dump(prefixes, f)
 
 ##Status:
 @client.event
@@ -22,6 +52,10 @@ async def on_ready():
 @client.command()
 async def hello(ctx):
     await ctx.send(f"Hello!")
+
+
+#-----------------------------------------
+
 
 ##Custom Help Command:
 @client.group(invoke_without_command = True)
@@ -141,7 +175,7 @@ async def unban_error(ctx, error):
     if isinstance(error, commands.MissingPermissions):
         await ctx.send('You do not have permssion to use that command :/')
 
-@client.command #The mute command
+@client.command() #The mute command
 @commands.has_permissions(manage_messages = True)
 async def mute(ctx, member: discord.Member, *, reason="None"):
     guild = ctx.guild
@@ -391,5 +425,24 @@ async def reroll(ctx, channel : discord.TextChannel, id_ : int):
 async def reroll_error(ctx, error):
     if isinstance(error, commands.MissingPermissions):
         await ctx.send('You do not have permssion to use that command :/')
+
+@client.command()
+@commands.has_permissions(administrator = True)
+async def prefix(ctx, prefix):
+    with open(r"database\prefixes.json", "r") as f:
+        prefixes = json.load(f)
+
+    prefixes[str(ctx.guild.id)] = prefix
+
+    with open(r"database\prefixes.json", "w")as f:
+        json.dump(prefixes, f)   
+    await ctx.send(f"The new prefix is `{prefix}`.")
+
+@prefix.error
+async def prefix_error(ctx, error):
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send('You do not have permssion to use that command :/')
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send("Please specify what the new prefix will be. Usage: `!prefix [new prefix]`")
 
 client.run("TOKEN")
