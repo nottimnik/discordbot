@@ -4,7 +4,10 @@ import wikipedia
 import asyncio
 import datetime
 import json
-from discord.ext import commands
+import os
+from discord.ext import commands, tasks
+from discord.utils import get
+from discord.ext.commands import Bot
 
 #Custom Prefix for every server
 def get_prefix(client, message):
@@ -102,9 +105,9 @@ async def help(ctx):
     em.add_field(name = "⚒️ Moderation", value = "`!help moderation`")
     em.add_field(name = "⭐ Level System", value = "`!help levelsystem`")
     em.add_field(name = "😂 Fun", value = "`!help fun`")
+    em.add_field(name = "🎉 Giveaways", value = "`!help giveaways`")
     em.add_field(name = "💬 Social", value = "`!help social`")
     em.add_field(name = "📣 Polls", value = "`!help polls`")
-    em.add_field(name = "🎉 Giveaway", value = "`!help giveaways`")
     em.add_field(name = "👑 Premium", value = "`!help premium`")
     em.add_field(name = "⚙ Other", value = "`!help other`")
     await ctx.send(embed = em)
@@ -129,6 +132,7 @@ async def fun(ctx):
     em.add_field(name = "!coinflip", value = "`Flips a coin.`", inline = False)
     em.add_field(name = "!wikipedia [topic]", value = "`Searches for a specific topic on wikipedia.`", inline = False)
     em.add_field(name = "!randomnumber (optional number 1) (optional number 2)", value = "`Generates a random number between the specified 2 numbers.`\n*if not specified it will just generate a random number*")
+    em.add_field(name = "!randompassword (optional length)", value = "`Generates a random password with a given length (default 16)`")
     await ctx.send(embed = em)
 
 @help.command()
@@ -141,7 +145,7 @@ async def social(ctx):
 @help.command()
 async def polls(ctx):
     em = discord.Embed(title = "📣 Polls Commands")
-    em.add_field(name = "!poll [message]", value = "`Creates a poll with the introduced message.`")
+    em.add_field(name = "!poll [message]", value = "`Creates a poll with the given message.`")
     await ctx.send(embed = em)
 
 @help.command()
@@ -162,11 +166,12 @@ async def other(ctx):
 async def levelsystem(ctx):
     em = discord.Embed(title = "⭐ Level System's Commands")
     em.add_field(name = "!level or !rank", value = "`See your level and xp.`", inline = False)
-    em.add_field(name = "!level [member] or !rank [member]", value = "`See the mentioned member's xp and level.`")
+    em.add_field(name = "!level [member] or !rank [member]", value = "`See the mentioned member's xp and level.`", inline = False)
+    await ctx.send(embed = em)
 
 @help.command()
 async def premium(ctx):
-    em = discord.Embed(title = "👑 Premium", description = "The Premium Version of SOME1's is totally something different.")
+    em = discord.Embed(title = "👑 Premium", description = "Premium is cheap and you get a completly different version of the bot that you can customize. Choose how it looks, the commands, the perks. You can find more details here: **https://some1.xyz/premium**")
     await ctx.send(embed = em)
 
 #Some other commands:
@@ -189,40 +194,50 @@ async def help_error(ctx, error):
 async def clear(ctx,amount=1):
     amount = amount + 1
     await ctx.channel.purge(limit = amount)
-    await ctx.send(f"Successfully deleted {amount-1} messages!")
+    em = discord.Embed(title = f"Successfully deleted {amount-1} messages!", color = 3066993)
+    await ctx.send(embed = em)
 
 @clear.error
 async def clear_error(ctx, error):
     if isinstance(error, commands.MissingPermissions):
-        await ctx.send('You do not have permssion to use that command :/')
-
-@client.command(aliases=["k"]) ##The Kick Command
+        em = discord.Embed(title="You do not have permssion to use that command :/", color = 15158332)
+        await ctx.send(embed = em)
+    
+@client.command() ##The Kick Command
 @commands.has_permissions(kick_members = True)
 async def kick(ctx, member : discord.Member, *,reason = "None"):
-    await member.send(f"You have been kicked. *Reason: {reason}*")
-    await ctx.send(f"{member} has been kicked from the server! *Reason: {reason}*")
+    em = discord.Embed(title = f"You have been kicked from the server {ctx.guild.name}", description = f"Reason: {reason}")
+    await member.send(embed = em)
+    em = discord.Embed(title = f"{member} has been kicked from the server", description = f"Reason: {reason}", color = 3066993)
+    await ctx.send(embed = em)
     await member.kick(reason=reason)
 
 @kick.error
 async def kick_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send('Please specify the member you want to kick. Usage: `!kick [member] (optional reason)`')
+        em = discord.Embed(title="Please specify the member you want to kick", description = "Usage: `!kick [member] (optional reason)`", color = 15158332)
+        await ctx.send(embed = em)
     if isinstance(error, commands.MissingPermissions):
-        await ctx.send('You do not have permssion to use that command :/')
+        em = discord.Embed(title="You do not have permssion to use that command :/", color = 15158332)
+        await ctx.send(embed = em)
 
 @client.command(aliases=["b"]) ##The Ban Command
 @commands.has_permissions(ban_members = True)
 async def ban(ctx, member : discord.Member, *,reason = "None"):
-    await member.send(f"You have been banned. *Reason: {reason}*")
-    await ctx.send(f"{member} has been banned from the server! *Reason: {reason}*")
+    em = discord.Embed(title = f"You have been banned from the server {ctx.guild.name}" , description = f"Reason: {reason}")
+    await member.send(embed = em)
+    em = discord.Embed(title =f"{member} has been banned from the server", description = f"Reason: {reason}", color = 3066993)
     await member.ban(reason=reason)
+    await ctx.send(embed = em)
 
 @ban.error
 async def ban_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send('Please specify the member you want to ban. Usage: `!ban [member] (optional reason)`')
+        em = discord.Embed(title = "Please specify the member you want to ban.", description = "Usage: `!ban [member] (optional reason)`", color = 15158332)
+        await ctx.send(embed = em)
     if isinstance(error, commands.MissingPermissions):
-        await ctx.send('You do not have permssion to use that command :/')
+        em = discord.Embed(title = 'You do not have permssion to use that command :/', color = 15158332)
+        await ctx.send(embed = em)
 
 @client.command(aliases=["ub"]) ##The unban command
 @commands.has_permissions(ban_members = True)
@@ -236,85 +251,96 @@ async def unban(ctx,*,member):
         if(user.name, user.discriminator)==(member_name,member_disc):
 
             await ctx.guild.unban(user)
-            await ctx.send(member_name + " has been unbanned!")
+            em = discord.Embed(title = member_name + " has been unbanned!", color = 3066993)
+            await ctx.send(embed = em)
             return
         
-    ctx.send(member + " was not found.")
+    em = discord.Embed(title = member + " was not found :(", color = 15158332)
+    await ctx.send(embed = em)
 
 @unban.error
 async def unban_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send('Please specify the member you want to unban. Usage: `!unban [member]`')
+        em = discord.Embed(title = "Please specify the member you want to unban", description = "Usage: `!unban [member]`", color = 15158332)
+        await ctx.send(embed = em)
     if isinstance(error, commands.MissingPermissions):
-        await ctx.send('You do not have permssion to use that command :/')
+        em = discord.Embed(title = 'You do not have permssion to use that command :/', color = 15158332)
+        await ctx.send(embed = em)
 
-@client.command() #The mute command
+@client.command()
 @commands.has_permissions(manage_messages = True)
-async def mute(ctx, member: discord.Member, *, reason="None"):
+async def mute(ctx, member: discord.Member, *, reason=None):
     guild = ctx.guild
     mutedRole = discord.utils.get(guild.roles, name="Muted")
 
-    ##If the server doesn't have a Muted role, the bot will create one:
     if not mutedRole:
         mutedRole = await guild.create_role(name="Muted")
 
-        ##The Permissions of the mutedRole
-        permissions = discord.Permissions()
-        permissions.update(send_messages = False, speak = True) 
+        for channel in guild.channels:
+            await channel.set_permissions(mutedRole, speak=False, send_messages=False, read_message_history=True, read_messages=True)
 
-        ##Sets The Permissions of the mutedRole
-        await mutedRole.edit(permissions = permissions)
-
-    await member.add_roles(mutedRole)
-    await ctx.send(f"{member} has been muted. *Reason: {reason}*")
+    await member.add_roles(mutedRole, reason=reason)
+    em = discord.Embed(title = f"{member} has been munted.", description = f"Reason: {reason}", color = 3066993)
+    await ctx.send(embed = em)
 
 @mute.error
 async def mute_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send('Please specify the member you want to mute. Usage: `!mute [member] (optional reason)`')
+        em = discord.Embed(title = "Please specify the member you want to mute.", description = "Usage: `!mute [member] (optional reason)`", color = 15158332)
+        await ctx.send(embed = em)
     if isinstance(error, commands.MissingPermissions):
-        await ctx.send('You do not have permssion to use that command :/')
+        em = discord.Embed(title = 'You do not have permssion to use that command :/', color = 15158332)
+        await ctx.send(embed = em)
 
-@client.command(aliases = ["um"]) #The unmute command
+@client.command()
 @commands.has_permissions(manage_messages = True)
-async def unmute(ctx, member : discord.Member, *,reason="None"):
+async def unmute(ctx, member: discord.Member):
     mutedRole = discord.utils.get(ctx.guild.roles, name="Muted")
+
     await member.remove_roles(mutedRole)
-    await ctx.send (f"{member} has been unmuted.")
+    em = discord.Embed(title = f"{member} has been unmuted.", color = 3066993)
+    await ctx.send(embed = em)
 
 @unmute.error
 async def unmute_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send('Please specify the player you want to unmute. Usage: `!unmute [member]`')
+        em = discord.Embed(title = "Please specify the member you want to unmute.", description = "Usage: `!unmute [member]`", color = 15158332)
+        await ctx.send(embed = em)
     if isinstance(error, commands.MissingPermissions):
-        await ctx.send('You do not have permssion to use that command :/')
+        em = discord.Embed(title = 'You do not have permssion to use that command :/', color = 15158332)
+        await ctx.send(embed = em)
 
 @client.command()
 @commands.has_permissions(manage_roles = True)
 async def addrole(ctx, user: discord.Member, role: discord.Role):
     await user.add_roles(role)
-    await ctx.send(f"Successfully given {role.mention} to {user.mention}")
+    em = discord.Embed(title = f"Successfully given the role {role} to {user}", color = 3066993)
+    await ctx.send(embed = em)
 
 @addrole.error
 async def addrole_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send('Please specify the player and the role you want to add to. Usage: `!addrole [member] [role]`')
+        em = discord.Embed(title = "Please specify the member and the role you want to add to", description = "Usage: `!addrole [member] [role]`", color = 15158332)
+        await ctx.send(embed = em)
     if isinstance(error, commands.MissingPermissions):
-        await ctx.send('You do not have permssion to use that command :/')
+        em = discord.Embed(title = "You do not have permssion to use that command :/", color = 15158332)
+        await ctx.send(embed = em)
 
 @client.command()
 @commands.has_permissions(manage_roles = True)
 async def delrole(ctx, user: discord.Member, role: discord.Role):
-    await user.add_roles(role)
-    await ctx.send(f"Successfully remove {role.mention} from {user.mention}")
+    await user.remove_roles(role)
+    em = discord.Embed(title = f"Successfully remove the role {role} from {user}", color = 3066993)
+    await ctx.send(embed = em)
 
 @delrole.error
 async def delrole_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send('Please specify the player and the role you want to remove from. Usage: `!delrole [member] [role]`')
+        em = discord.Embed(title = "Please specify the member and the role you want to remove from", description = "Usage: `!delrole [member] [role]`", color = 15158332)
+        await ctx.send(embed = em)
     if isinstance(error, commands.MissingPermissions):
-        await ctx.send('You do not have permssion to use that command :/')
-
+        em = discord.Embed(title = "You do not have permssion to use that command :/", color = 15158332)
+        await ctx.send(embed = em)
 
 #Fun Commands:
 @client.command()
@@ -324,12 +350,27 @@ async def coinflip(ctx):
 
 @client.command()
 async def randomnumber(ctx, n1 = 0, n2 = 1000000000):
-    await ctx.send("Your random number is " + str(random.randint(n1, n2)))
+    number = str(random.randint(n1, n2))
+    em = discord.Embed(title = f"Generated a number between {n1} and {n2}", description = f"Your Randomly Generated Number: **{number}**")
+    await ctx.send(embed = em)
+
+@client.command()
+async def randompassword(ctx, len: int = 16):
+    n = 1
+    password = ""
+    char = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890"
+    for n in range (1,len):
+        password += random.choice(char)
+        n += 1
+    em = discord.Embed(title = f"Your randomly generated password is {password}")
+    await ctx.send(embed = em)
+
 
 @client.command() #Command that users can use to search articles on wikipedia
-async def wiki(ctx, *,topic = "wikipedia"):
+async def wiki(ctx, *,topic : str):
     try:
-        page = wikipedia.page(wikipedia.suggest(topic))
+        topic = wikipedia.search(query = topic,results = 1)
+        page = wikipedia.page(topic)
         if(len(page.summary)>2000): #if the summary of the page is bigger than 2000 characters, the summary will be resized to 2000 characters.
             em = discord.Embed(title = ":globe_with_meridians: " + str(topic) + " | Summary", description = str(str('%.2000s') % str(page.summary)))
             em.set_footer(text=page.url)
@@ -337,19 +378,22 @@ async def wiki(ctx, *,topic = "wikipedia"):
             em = discord.Embed(title = str(topic), description = page.summary)
             em.set_footer(text="Source: " + page.url)
         await ctx.send(embed = em)
-    except: #if the wikipedia API return a error(didn't find a article or there are too many articles) the author will be announced
-        await ctx.send(":globe_with_meridians: There are too many/none topics with this keyword on wikipedia. Please be more specific.")
+    except: #if the api can't find an article about the given topic, it will announce the user
+        em = discord.Embed(title = ":globe_with_meridians: I couldn't find any articles about this topic :(", color = 15158332)
+        await ctx.send(embed = em)
 
 @wiki.error
 async def wiki_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send('Please specify the topic you want to search for. Usage: `!wiki [topic]`')
+        em = discord.Embed(title = "Please specify the topic you want to search for", description = "Usage: `!wiki [topic]`", color = 15158332)
+        await ctx.send(embed = em)
 
 #Social Commands:
 @client.command()
 async def hug(ctx, member: discord.Member):
     ##Links of gifs that the bot will send
-    gifs = ["https://gifimage.net/wp-content/uploads/2017/09/anime-comfort-hug-gif-14.gif",
+    gifs = [
+    "https://gifimage.net/wp-content/uploads/2017/09/anime-comfort-hug-gif-14.gif",
     "https://78.media.tumblr.com/18fdf4adcb5ad89f5469a91e860f80ba/tumblr_oltayyHynP1sy5k7wo1_500.gif",
     "https://media.tenor.co/images/42922e87b3ec288b11f59ba7f3cc6393/raw",
     "https://i.imgur.com/iI3o7t0.gif",
@@ -357,8 +401,8 @@ async def hug(ctx, member: discord.Member):
     "https://thumbs.gfycat.com/AchingKlutzyJohndory-max-1mb.gif",
     "https://thumbs.gfycat.com/SilkyAmbitiousHarvestmen-max-1mb.gif"
     ]
-    em = discord.Embed(title = f"{member} you received a hug :hugging:")
-    em.set_image(url=str(random.choice(gifs)))
+    em = discord.Embed(title = f"{member} you received a hug from {ctx.author.mention} :hugging:")
+    em.set_image(url=random.choice(gifs))
     await ctx.send(embed = em)
 
 @hug.error
