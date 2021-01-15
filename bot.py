@@ -108,7 +108,7 @@ async def help(ctx):
     em.add_field(name = "🎉 Giveaways", value = "`!help giveaways`")
     em.add_field(name = "💬 Social", value = "`!help social`")
     em.add_field(name = "📣 Polls", value = "`!help polls`")
-    em.add_field(name = "👑 Premium", value = "`!help premium`")
+    #em.add_field(name = "👑 Premium", value = "`!help premium`")
     em.add_field(name = "⚙ Other", value = "`!help other`")
     await ctx.send(embed = em)
 
@@ -131,7 +131,9 @@ async def fun(ctx):
     em = discord.Embed(title = "😂 Fun Commands")
     em.add_field(name = "!coinflip", value = "`Flips a coin.`", inline = False)
     em.add_field(name = "!wikipedia [topic]", value = "`Searches for a specific topic on wikipedia.`", inline = False)
-    em.add_field(name = "!randomnumber (optional number 1) (optional number 2)", value = "`Generates a random number between the specified 2 numbers.`\n*if not specified it will just generate a random number*")
+    em.add_field(name = "!weebrate", value = "`See if you are a weeb or not.`", inline = False)
+    em.add_field(name = "!simprate", value = "`See how much of a simp you are.`", inline = False)
+    em.add_field(name = "!randomnumber (optional number 1) (optional number 2)", value = "`Generates a random number between the specified 2 numbers.`\n*if not specified it will just generate a random number*", inline = False)
     em.add_field(name = "!randompassword (optional length)", value = "`Generates a random password with a given length (default 16)`")
     await ctx.send(embed = em)
 
@@ -151,14 +153,14 @@ async def polls(ctx):
 @help.command()
 async def giveaways(ctx):
     em = discord.Embed(title = "🎉 Giveaways Commands")
-    em.add_field(name = "!giveaway", value = "`Creates a new giveaway.`")
+    em.add_field(name = "!giveaway", value = "`Creates a new giveaway.`", inline = False)
     em.add_field(name = "!reroll [channel] [id of the giveaway]", value = "`Rerolls the winners of the giveaway.`")
     await ctx.send(embed = em)
 
 @help.command()
 async def other(ctx):
     em = discord.Embed(title = "⚙ Other Commands")
-    em.add_field(name = "!prefix [new prefix]", value = "`Changes the prefix of the bot.`\n*Required Permission: Administrator*")
+    em.add_field(name = "!prefix [new prefix]", value = "`Changes the prefix of the bot.`\n*Required Permission: Administrator*", inline = False)
     em.add_field(name = "!developers", value = "The Developers behind SOME1.")
     await ctx.send(embed = em)
 
@@ -169,18 +171,15 @@ async def levelsystem(ctx):
     em.add_field(name = "!level [member] or !rank [member]", value = "`See the mentioned member's xp and level.`", inline = False)
     await ctx.send(embed = em)
 
-@help.command()
-async def premium(ctx):
-    em = discord.Embed(title = "👑 Premium", description = "Premium is cheap and you get a completly different version of the bot that you can customize. Choose how it looks, the commands, the perks. You can find more details here: **https://some1.xyz/premium**")
-    await ctx.send(embed = em)
+#@help.command()
+#async def premium(ctx):
+#    em = discord.Embed(title = "👑 Premium", description = "Premium is cheap and you get a completly different version of the bot that you can customize. Choose how it looks, the commands, the perks. You can find more details here: **https://some1.xyz/premium**")
+#    await ctx.send(embed = em)
 
 #Some other commands:
 @client.command() #Developer Command to see the developers of SOME1
-async def developers(ctx):
-    em = discord.Embed(title = "SOME1's Developers", description = "The team behind SOME1.")
-    em.add_field(name = "Timnik#4158", value = "Main Developer", inline = False)
-    em.add_field(name = "BossuJmek2k19#7072", value = "Made the Audio Bot", inline = False)
-    await ctx.send(embed = em)
+async def developer(ctx):
+    await ctx.send("Timnik#4158 is the developer of SOME1's. Add him on discod if you want to talk with him :)")
 
 @help.error
 async def help_error(ctx, error):
@@ -365,6 +364,46 @@ async def randompassword(ctx, len: int = 16):
     em = discord.Embed(title = f"Your randomly generated password is {password}")
     await ctx.send(embed = em)
 
+@client.command()
+async def weebrate(ctx):
+    number = random.randint(1,100)
+    em = discord.Embed
+    if(number<11):
+        color = 0
+        em = discord.Embed(title = "Wow! You are not a weeb at all.. Fking Loser", description = f"You are {number}% weeb", color = color)
+    elif(number<26):
+        color = 10181046
+        em = discord.Embed(title = "You are a beginner.. GO WATCH MORE ANIME NOOB!", description = f"You are {number}% weeb", color = color)
+    elif(number<51):
+        color = 3426654
+        em = discord.Embed(title = "I see.. You are decent, but not a pro weeb.. You still have a social life..", description = f"You are {number}% weeb", color = color)
+    elif(number<70):
+        color = 1752220
+        em = discord.Embed(title = "You are a pro weeb", description = f"You are {number}% weeb", color = color)
+    elif(number < 90):
+        color = 3066993
+        em = discord.Embed(title = "I never saw such a weeb.. I am impressed!", description = f"You are {number}% weeb", color = color)
+
+    await ctx.send(embed = em)
+
+@client.command()
+async def simprate(ctx):
+    number = random.randint(1,100)
+    em = discord.Embed
+    if(number<25):
+        color = 0
+        em = discord.Embed(title = "Congratz! You are not a simp", description = f"You are {number}% simp", color = color)
+    elif(number<51):
+        color = 3426654
+        em = discord.Embed(title = "Pretty much everyone is a small simp after all..", description = f"You are {number}% simp", color = color)
+    elif(number<70):
+        color = 1752220
+        em = discord.Embed(title = "Fking simp", description = f"You are {number}% simp", color = color)
+    elif(number < 90):
+        color = 3066993
+        em = discord.Embed(title = "HOW MUCH MONEY DID YOU DONATED TO TWITCH THOUGHTS?!", description = f"You are {number}% simmp", color = color)
+
+    await ctx.send(embed = em)
 
 @client.command() #Command that users can use to search articles on wikipedia
 async def wiki(ctx, *,topic : str):
